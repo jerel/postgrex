@@ -32,16 +32,24 @@ defmodule Postgrex.Utils do
   Converts pg major.minor.patch (http://www.postgresql.org/support/versioning) version to an integer
   """
   def parse_version(version) do
-    list =
+    segments =
       version
-      |> String.split(".")
-      |> Enum.map(&elem(Integer.parse(&1), 0))
+      |> String.split(" ", parts: 2)
+      |> hd()
+      |> String.split(".", parts: 4)
+      |> Enum.map(&parse_version_bit/1)
 
-    case list do
+    case segments do
+      [major, minor, patch, _] -> {major, minor, patch}
       [major, minor, patch] -> {major, minor, patch}
       [major, minor] -> {major, minor, 0}
       [major] -> {major, 0, 0}
     end
+  end
+
+  defp parse_version_bit(bit) do
+    {int, _} = Integer.parse(bit)
+    int
   end
 
   @doc """
